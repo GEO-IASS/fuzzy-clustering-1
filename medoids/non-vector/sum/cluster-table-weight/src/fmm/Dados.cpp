@@ -155,26 +155,32 @@ istream& operator>>(istream& in, Dados& a) {
 			if (ct)
 				linha.push_back(c);
 		}
-			
+
+		//while ((pos = linha.find(' ')) != string::npos)
+		//	linha.erase(pos, 1);
+		linha.push_back(',');
+
 		ct = 0;
 		piece.clear();
 		v.clear();
-		
-		linha.push_back(',');
-		
-    for(unsigned int j = 0; j < linha.size(); ++j) if(linha[j] != ' ') {
-      if (linha[j] == '(') ct++; else if (linha[j] == ')') ct--;
-      if(!ct && linha[j] == ',') {
-        v.push_back(piece), piece.clear();
-      } else piece.push_back(linha[j]);
-    }
+		for (size_t j = 0; j < linha.size(); j++) if(linha[j] != ' ') {
+			if (linha[j] == '(')
+				ct++;
+			if (linha[j] == ')')
+				ct--;
+
+			if (!ct && linha[j] == ',') {
+				v.push_back(piece);
+				piece.clear();
+			} else piece.push_back(linha[j]);
+		}
 
 		piece = v[Dados::var_classe - 1];
 		assert(sscanf(piece.c_str(),"%u",&priori) == 1);
 		assert(priori> 0);
 
 		for (size_t j = a.prioriCluster.size(); j < priori; j++) {
-			a.prioriCluster.push_back(Cluster(0));
+			a.prioriCluster.push_back(Cluster(0,0));
 		}
 		a.prioriCluster[priori - 1].insert(i);
 	}
