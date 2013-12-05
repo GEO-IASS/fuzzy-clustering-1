@@ -17,3 +17,5 @@ tmp/
 *.txt
 *.out
 *~
+.cproject
+.project
