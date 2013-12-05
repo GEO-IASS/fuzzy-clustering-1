@@ -8,6 +8,10 @@
 #ifndef INCLUDES_H_
 #define INCLUDES_H_
 
+#if defined (__WIN32__) or defined (_WIN32) or defined (__CYGWIN32__)
+  #define WINDOWS
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -17,10 +21,6 @@
 #include <cmath>
 #include <ctime>
 #include <cassert>
-
-#ifdef WINDOWS
-#include <process.h>
-#endif
 
 #include <iostream>
 #include <fstream>
