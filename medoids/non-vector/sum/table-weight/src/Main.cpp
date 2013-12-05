@@ -23,11 +23,10 @@ int numeroClassesEscolhidas = 0; //Numero de classes que foram selecionadas para
 
 vector<string> v;
 string arq, saida;
-int numCluster;
+int numCluster, numPrototipo;
 int numInicializacao;
 int var_classe;
 int parametro_m;
-int parametro_q;
 int parametro_s;
 int numIteracoes;
 
@@ -40,6 +39,10 @@ void read(const char *nome) {
 		if (s.find("(numCluster)") != string::npos) {
 			in >> s;
 			sscanf(s.c_str(), "%d", &numCluster);
+			input = output = false;
+		} else if (s.find("(numPrototipos)") != string::npos) {
+			in >> s;
+			sscanf(s.c_str(), "%d", &numPrototipo);
 			input = output = false;
 		} else if (s.find("(numInicializacao)") != string::npos) {
 			in >> s;
@@ -54,11 +57,6 @@ void read(const char *nome) {
 		else if (s.find("(parametro_m)") != string::npos) {
 			in >> s;
 			sscanf(s.c_str(), "%d", &parametro_m);
-			input = output = false;
-		}
-		else if (s.find("(parametro_q)") != string::npos) {
-			in >> s;
-			sscanf(s.c_str(), "%d", &parametro_q);
 			input = output = false;
 		}
 		else if (s.find("(parametro_s)") != string::npos) {
@@ -87,10 +85,10 @@ void read(const char *nome) {
 	}
 
 	dbg7(numCluster);
+	dbg7(numPrototipo);
 	dbg7(numInicializacao);
 	dbg7(numIteracoes);
 	dbg7(parametro_m);
-	dbg7(parametro_q);
 	dbg7(parametro_s);
 	dbg7(var_classe);
 
@@ -119,7 +117,7 @@ int main(int argc, char **argv) {
 	try {
 		Repositorio repositorio(v);
 		ofstream out(saida.c_str(), ios::out);
-		Algoritmo algoritmo(numInicializacao, numCluster, parametro_m, parametro_q,parametro_s, numIteracoes, repositorio, out);
+		Algoritmo algoritmo(numInicializacao, numCluster, numPrototipo, parametro_m, numIteracoes, parametro_s, repositorio, out);
 		algoritmo.executar();
 	} catch (exception &error) {
 		cout << error.what() << endl;

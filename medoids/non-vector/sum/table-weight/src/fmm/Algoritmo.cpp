@@ -6,17 +6,15 @@
  */
 
 #include "Algoritmo.h"
-#include "validation.h"
 
 MinCostFlow Algoritmo::mcf;
 string Algoritmo::saida = "";
 
-Algoritmo::Algoritmo(size_t inicializacoes, size_t clusters, size_t m, size_t q, size_t s, size_t limite, const Repositorio& repositorio, ostream& out) :
-	inicializacoes(inicializacoes), clusters(clusters), repositorio(repositorio), out(out) {
-	melhor = atual = Resultado(clusters, repositorio.tabela.size(), repositorio.tabela[0].n, m,q,s, 0);
+Algoritmo::Algoritmo(size_t inicializacoes, size_t clusters, size_t prototipos, size_t m, size_t limite, size_t parametro_s, const Repositorio& repositorio, ostream& out) :
+	inicializacoes(inicializacoes), clusters(clusters), prototipos(prototipos), repositorio(repositorio), out(out) {
+	melhor = atual = Resultado(clusters, prototipos, repositorio.tabela.size(), repositorio.tabela[0].n, m, 0);
 	this->individuos = this->repositorio.tabela[0].n;
 	this->limite = limite;
-	niter = 0;
 }
 
 Algoritmo::~Algoritmo() {
@@ -29,6 +27,7 @@ void Algoritmo::executar() {
 	this->out << "# Numero de inicializacoes: " << this->inicializacoes << "\n";
 	this->out << "# Numero de individuos: " << this->individuos << "\n";
 	this->out << "# Numero de clusters: " << this->clusters << "\n";
+	this->out << "# Numero de prototipos: " << this->prototipos << "\n";
 	this->out << "# " << repositorio << "\n";
 
 	this->out << "\n\n";
@@ -68,8 +67,6 @@ void Algoritmo::executar() {
 			// ------------------------------------------------
 
 		} while (repete && iteracao <= limite);
-
-		niter += repete;
 
 		// ------------------------------------------------
 		// - IMPRESSAO ------------------------------------
@@ -144,26 +141,14 @@ void Algoritmo::executar() {
 
 	// ------------------------------------------------
 	// confusing matrix
-	if(Dados::var_classe > 0) {
-		this->imprimirMatriz(out);
-	}
+	this->imprimirMatriz(out);
 
 	// ------------------------------------------------
 	// access file
 	this->printAcessFile(c);
 
-	// ------------------------------------------------
-	// interpretation index
-	this->out << "\n";
-	this->printGlobalInertia();
-	this->out << "\n\n";
-	this->printWithinClusterInertia();
-	this->out << "\n\n";
-	this->printGeneralIndex();
-	this->out << "\n";
-	this->print_estranho();
-	this->out << "\n\n";
 }
+//;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 bool Algoritmo::inicializacao() {
 	this->atual.clear();
@@ -179,10 +164,14 @@ bool Algoritmo::inicializacao() {
 
 void Algoritmo::etapa1() {
 	this->atual.atualizaCluster(this->repositorio);
-	this->atual.atualizaCoeficiente(this->repositorio);
+
 }
 
 bool Algoritmo::etapa2() {
+
+	if(!this->atual.atualizaCoeficiente(this->repositorio)) {
+		return false;
+	}
 
 	this->atual.atualizarU(this->repositorio);
 	double dif = this->atual.J;
@@ -223,9 +212,12 @@ void Algoritmo::printAcessFile(size_t c[]) {
 	// ---------------------------------------------------------------------
 }
 
+#include "validation.h"
+
 void Algoritmo::imprimirMatriz(ostream &out) {
 	double calculaErro(int individuos, vector<vector<int> > &table);
 	double fMeasure(vector<vector<int> > &table);
+
 
 	//int k = (int) melhorCluster.size();
 	//int p = dados.getNumPrioriCluster();
@@ -283,6 +275,7 @@ void Algoritmo::imprimirMatriz(ostream &out) {
 	out << "\n# error: " << fixed << setprecision(2) << (100 * error1) << "%\n";
 	out << "# F measure: " << fixed << setprecision(6) << fmed << "\n";
 	//--------------------------------------------------------------------------------
+
 	// more:
 	Array< Array<double> > PRIORI;
 	PRIORI.resize(individuos);
@@ -299,6 +292,7 @@ void Algoritmo::imprimirMatriz(ostream &out) {
 	out << "# fuzzy_rand_index_campello: " << fixed << setprecision(6) << campello << "\n";
 	// hullermeier
   out << "# fuzzy_rand_index_hullermeier: " << fixed << setprecision(6) << hullermeier << "\n";
+
 }
 
 double calculaErro(int individuos, vector<vector<int> > &table) {
@@ -360,394 +354,6 @@ double fMeasure(vector<vector<int> > &table) {
 	return F / table[K][P];
 }
 
-
 ostream& operator<<(ostream& out, Algoritmo& a) {
 	return out << (string(a));
 }
-
-void Algoritmo::printGlobalInertia() {
-	this->melhor.atualizaOverallPrototype(this->repositorio);
-	Array<int> & prototipo = this->melhor.overallPrototype;
-	double T = this->melhor.calculaT(this->repositorio, prototipo);
-
-	this->out << fixed << setprecision(1);
-
-	this->out
-			<< "/------------------------------  Global Inertia - T ------------------------------/"
-			<< "\n";
-	this->out << "\n";
-	this->out << "# Data set global inertia = " << T << "\n";
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	// (item a)
-	this->out << "# The global inertia for each cluster" << "\n";
-	this->out << "\n";
-	this->out << "===========================" << "\n";
-	this->out << "CLUSTER               VALUE" << "\n";
-	this->out << "---------------------------" << "\n";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		out << setw(7) << (k + 1);
-		out << setw(20) << this->melhor.calculaT(this->repositorio, k,
-				prototipo);
-		out << "\n";
-	}
-	this->out << "===========================" << "\n";
-	this->out << setw(7) << "Sum";
-	this->out << setw(20) << T;
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	// (item b)
-	this->out << "# The global inertia for each table" << "\n";
-	this->out << "\n";
-	this->out << "=========================" << "\n";
-	this->out << "TABLE               VALUE" << "\n";
-	this->out << "-------------------------" << "\n";
-	for (size_t t = 0; t < this->repositorio.tabela.size(); t++) {
-		double dist = 0;
-		for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-			dist += this->melhor.calculaT(this->repositorio, k, t, prototipo);
-		}
-		this->out << setw(5) << (t + 1);
-		this->out << setw(20) << dist;
-		this->out << "\n";
-	}
-	this->out << "=========================" << "\n";
-	this->out << setw(5) << "Sum";
-	this->out << setw(20) << T;
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	// (item c)
-	this->out << "# The global inertia for each table and cluster" << "\n";
-	this->out << "\n";
-
-	this->out << "============";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "====================";
-	}
-	this->out << "\n";
-
-	this->out << "            ";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << setw(16) << "CLUSTER";
-		this->out << setw(4) << (k + 1);
-	}
-	this->out << "\n";
-
-	this->out << "------------";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "--------------------";
-	}
-	this->out << "\n";
-
-	for (size_t t = 0; t < this->repositorio.tabela.size(); t++) {
-		this->out << "TABLE";
-		this->out << setw(7) << (t + 1);
-		double T_t = 0;
-		for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-			double T_kt = this->melhor.calculaT(this->repositorio, k, t,
-					prototipo);
-			T_t += T_kt;
-			this->out << setw(20) << T_kt;
-		}
-		this->out << " | " << T_t << "\n";
-	}
-
-	this->out << "============";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "====================";
-	}
-	this->out << "\n";
-
-	this->out << "            ";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << setw(20) << this->melhor.calculaT(this->repositorio, k,
-				prototipo);
-	}
-	this->out << "\n";
-	// ------------------------------------------------------------
-}
-
-void Algoritmo::printWithinClusterInertia() {
-	double J = this->melhor.calculaJ(this->repositorio);
-
-	this->out
-			<< "/------------------------------  Within-cluster Inertia - J ------------------------------/"
-			<< "\n";
-	this->out << "\n";
-	this->out << "# Data set within-cluster inertia = " << J << "\n";
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	// (item a)
-	this->out << "# The within-cluster inertia for each cluster" << "\n";
-	this->out << "\n";
-	this->out << "===========================" << "\n";
-	this->out << "CLUSTER               VALUE" << "\n";
-	this->out << "---------------------------" << "\n";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << setw(7) << (k + 1);
-		this->out << setw(20) << this->melhor.calculaJ(this->repositorio, k);
-		this->out << "\n";
-	}
-	this->out << "===========================" << "\n";
-	this->out << setw(7) << "Sum";
-	this->out << setw(20) << J;
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	// (item b)
-	this->out << "# The within-cluster inertia for each table" << "\n";
-	this->out << "\n";
-	this->out << "=========================" << "\n";
-	this->out << "TABLE               VALUE" << "\n";
-	this->out << "-------------------------" << "\n";
-	for (size_t t = 0; t < this->repositorio.tabela.size(); t++) {
-		double dist = 0;
-		for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-			dist += this->melhor.calculaJ(this->repositorio, k, t);
-		}
-		this->out << setw(5) << (t + 1);
-		this->out << setw(20) << dist;
-		this->out << "\n";
-	}
-	this->out << "=========================" << "\n";
-	this->out << setw(5) << "Sum";
-	this->out << setw(20) << J;
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	// (item c)
-	this->out << "# The global inertia for each table and cluster" << "\n";
-	this->out << "\n";
-
-	this->out << "============";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "====================";
-	}
-	this->out << "\n";
-
-	this->out << "            ";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << setw(16) << "CLUSTER";
-		this->out << setw(4) << (k + 1);
-	}
-	this->out << "\n";
-
-	this->out << "------------";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "--------------------";
-	}
-	this->out << "\n";
-
-	for (size_t t = 0; t < this->repositorio.tabela.size(); t++) {
-		this->out << "TABLE";
-		this->out << setw(7) << (t + 1);
-		double J_t = 0;
-		for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-			double J_kt = this->melhor.calculaJ(this->repositorio, k, t);
-			J_t += J_kt;
-			this->out << setw(20) << J_kt;
-		}
-		this->out << " | " << J_t << "\n";
-	}
-
-	this->out << "============";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "====================";
-	}
-	this->out << "\n";
-
-	this->out << "            ";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << setw(20) << this->melhor.calculaJ(this->repositorio, k);
-	}
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-}
-
-void Algoritmo::printGeneralIndex() {
-	double Q = this->melhor.calculaQ(this->repositorio);
-	this->melhor.atualizaOverallPrototype(this->repositorio);
-	Array<int> & prototipo = this->melhor.overallPrototype;
-
-	this->out
-			<< "/------------------------------  General Index  ------------------------------/"
-			<< "\n";
-	this->out << "# Quality of the partition - Q" << "\n";
-	this->out << "(The proportion of inertia explains by the partition): ";
-	this->out << fixed << setprecision(6) << Q << "\n";
-	this->out << "\n";
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	this->out << "# Quality of the table j - Q(j)" << "\n";
-	this->out << "\n";
-	this->out << "=========================" << "\n";
-	this->out << "TABLE               VALUE" << "\n";
-	this->out << "-------------------------" << "\n";
-	double sum = 0;
-	for (size_t t = 0; t < this->repositorio.tabela.size(); t++) {
-		double J_t = 0;
-		double T_t = 0;
-		for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-			J_t += this->melhor.calculaJ(this->repositorio, k, t);
-			T_t += this->melhor.calculaT(this->repositorio, k, t, prototipo);
-		}
-		double Q_t = 1 - (J_t / T_t);
-		sum += Q_t;
-		this->out << setw(5) << (t + 1);
-		this->out << setw(20) << Q_t << " | 1 - (" << J_t << "/" << T_t << ")";
-		;
-		this->out << "\n";
-	}
-	this->out << "=========================" << "\n";
-	this->out << setw(5) << "Sum";
-	this->out << setw(20) << sum;
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-	this->out << "\n";
-}
-
-void Algoritmo::print_estranho() {
-	this->out
-			<< "/------------------------------  Cluster interpretation indices  ------------------------------/"
-			<< "\n";
-	this->out << "\n";
-
-	// print J's
-	double J = this->melhor.calculaJ(this->repositorio);
-	this->out
-			<< "# The relative contribution of clusters to the within-cluster inertia - J(i)"
-			<< "\n";
-	this->out << "\n";
-	this->out << "===========================" << "\n";
-	this->out << "CLUSTER               VALUE" << "\n";
-	this->out << "---------------------------" << "\n";
-	double sum = 0;
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		double J_k = this->melhor.calculaJ(this->repositorio, k);
-		sum += (J_k / J);
-		this->out << setw(7) << (k + 1);
-		this->out << setw(20) << (J_k / J) << "  |  (" << J_k << "/" << J
-				<< ")";
-		this->out << "\n";
-	}
-	this->out << "===========================" << "\n";
-	this->out << setw(7) << "Sum";
-	this->out << setw(20) << sum;
-	this->out << "\n";
-
-	this->out << "\n";
-
-	// print T's
-	double T = this->melhor.calculaT(this->repositorio);
-	this->melhor.atualizaOverallPrototype(this->repositorio);
-	Array<int> & prototipo = this->melhor.overallPrototype;
-
-	this->out
-			<< "# The proportion of the global inertia explained by clusters - T(i)"
-			<< "\n";
-	this->out << "\n";
-	this->out << "===========================" << "\n";
-	this->out << "CLUSTER               VALUE" << "\n";
-	this->out << "---------------------------" << "\n";
-	sum = 0;
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		double T_k = this->melhor.calculaT(this->repositorio, k, prototipo);
-		sum += (T_k / T);
-		this->out << setw(7) << (k + 1);
-		this->out << setw(20) << (T_k / T) << "  |  (" << T_k << "/" << T
-				<< ")";
-		this->out << "\n";
-	}
-	this->out << "===========================" << "\n";
-	this->out << setw(7) << "Sum";
-	this->out << setw(20) << sum;
-	this->out << "\n";
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	this->out << "# Quality of the cluster i - Q(i)" << "\n";
-	this->out << "\n";
-	this->out << "===========================" << "\n";
-	this->out << "CLUSTER               VALUE" << "\n";
-	this->out << "---------------------------" << "\n";
-	sum = 0;
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		double Q_k = this->melhor.calculaQ(this->repositorio, k);
-		sum += Q_k;
-		this->out << setw(7) << (k + 1);
-		this->out << setw(20) << (Q_k) << " | 1 - (" << (this->melhor.calculaJ(
-				this->repositorio, k)) << "/" << (this->melhor.calculaT(
-				this->repositorio, k, prototipo)) << ")";
-		this->out << "\n";
-	}
-	this->out << "===========================" << "\n";
-	this->out << setw(7) << "Sum";
-	this->out << setw(20) << sum;
-	this->out << "\n";
-	// ------------------------------------------------------------
-
-	this->out << "\n";
-
-	// ------------------------------------------------------------
-	this->out << "# Quality of the cluster i for the table j - Q(i)(j) "
-			<< "\n";
-	this->out << "\n";
-
-	this->out << "============";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "====================";
-	}
-	this->out << "\n";
-
-	this->out << "            ";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << setw(16) << "CLUSTER";
-		this->out << setw(4) << (k + 1);
-	}
-	this->out << "\n";
-
-	this->out << "------------";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "--------------------";
-	}
-	this->out << "\n";
-
-	for (size_t t = 0; t < this->repositorio.tabela.size(); t++) {
-		this->out << "TABLE";
-		this->out << setw(7) << (t + 1);
-		for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-			this->out << setw(20) << this->melhor.calculaQ(this->repositorio,
-					k, t);
-		}
-		this->out << "\n";
-	}
-
-	this->out << "============";
-	for (size_t k = 0; k < this->melhor.cluster.size(); k++) {
-		this->out << "====================";
-	}
-	this->out << "\n";
-	// ------------------------------------------------------------
-}
-

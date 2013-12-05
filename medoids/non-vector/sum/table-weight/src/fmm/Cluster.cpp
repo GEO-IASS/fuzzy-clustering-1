@@ -7,18 +7,23 @@
 
 #include "Cluster.h"
 
-Cluster::Cluster(size_t n, size_t q) {
-	prototipo.resize(n);
-	for(size_t i = 0; i < n; i++) {
-		prototipo[i].resize(q);
-	}
+Cluster::Cluster(size_t n) :
+	prototipo(n) {
 }
 
 Cluster::~Cluster() {
 }
 
+double Cluster::distancia(size_t individuo, const Tabela& t) const {
+	double d = 0;
+	for (size_t i = 0; i < this->prototipo.size(); i++) {
+		d += t(individuo, prototipo[i]);
+	}
+	return d;
+}
+
 Cluster Cluster::operator&&(const Cluster& c) const {
-	Cluster intersecao(0,0);
+	Cluster intersecao;
 	tr ((*this), iter) {
 		if (c.count(*iter)) {
 			intersecao.insert(*iter);
@@ -30,13 +35,7 @@ Cluster Cluster::operator&&(const Cluster& c) const {
 Cluster::operator string() const {
 	os out;
 	if(this->prototipo.size()) {
-		out << "Prototipos(s): {";
-		for(size_t j = 0; j < this->prototipo.size(); j++) {
-			out << " ";
-			if(j) out << ",";
-			out << this->prototipo[j];
-		}
-		out << " }\n";
+		out << this->prototipo << "\n";
 	}
 	out << "Elemento(s): {";
 	for (Cluster::iterator iter = begin(); iter != end(); iter++) {
