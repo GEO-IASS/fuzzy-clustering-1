@@ -22,6 +22,7 @@ struct Algoritmo {
 
 	const size_t inicializacoes; // numero de inicializacoes
 	const size_t clusters; // numero de clusters
+	const size_t prototipos; // numero de prototipos
 	const Repositorio& repositorio; // dados
 	ostream& out; // arquivo de saida
 
@@ -30,9 +31,8 @@ struct Algoritmo {
 
 	Resultado melhor, atual;
 	double fmed, error1;
-	int niter;
 
-	Algoritmo(size_t, size_t, size_t, size_t, size_t, size_t, const Repositorio&, ostream&);
+	Algoritmo(size_t, size_t, size_t,size_t, size_t, size_t, const Repositorio&, ostream&);
 	virtual ~Algoritmo();
 
 	void executar();
@@ -44,16 +44,6 @@ struct Algoritmo {
 
 	void printAcessFile(size_t []);
 	void imprimirMatriz(ostream &);
-
-	// ------------------------------------------------
-	// interpretation functions
-
-	void printGlobalInertia();
-	void printWithinClusterInertia();
-	void printGeneralIndex();
-	void print_estranho();
-	// ------------------------------------------------
-
 
 	friend ostream& operator<<(ostream&, Algoritmo&);
 };

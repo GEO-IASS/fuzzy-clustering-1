@@ -21,25 +21,23 @@ struct Cluster: public set<int, less<int> > {
 
 		operator string() const {
 			os out;
-			out << "[";
+			out << "Prototipo(s): {";
 			for (size_t i = 0; i < this->size(); i++) {
 				if(i > 0) {
 					out << ",";
 				}
 				out << " " << (*this)[i];
 			}
-			out << " ]";
+			out << " }";
 			return out.str();
 		}
 
 		friend ostream& operator<<(ostream& out, const Prototipo& p) {
 			return out << ((string) p);
 		}
-	};
+	} prototipo;
 
-	Array<Prototipo> prototipo;
-
-	Cluster(size_t, size_t);
+	Cluster(size_t = 0);
 	virtual ~Cluster();
 
 	double distancia(size_t, const Tabela&) const;

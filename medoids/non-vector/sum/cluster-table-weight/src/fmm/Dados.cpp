@@ -129,7 +129,7 @@ istream& operator>>(istream& in, Dados& a) {
 	char c = '?';
 	int ct;
 	size_t priori = 0;
-	size_t pos;
+	//size_t pos;
 	vector<string> v;
 	string piece;
 
@@ -156,14 +156,14 @@ istream& operator>>(istream& in, Dados& a) {
 				linha.push_back(c);
 		}
 
-		//while ((pos = linha.find(' ')) != string::npos)
-		//	linha.erase(pos, 1);
+		/*while ((pos = linha.find(' ')) != string::npos)
+			linha.erase(pos, 1);*/
 		linha.push_back(',');
 
 		ct = 0;
 		piece.clear();
 		v.clear();
-		for (size_t j = 0; j < linha.size(); j++) if(linha[j] != ' ') {
+		for (size_t j = 0; j < linha.size(); j++) {
 			if (linha[j] == '(')
 				ct++;
 			if (linha[j] == ')')
@@ -180,7 +180,7 @@ istream& operator>>(istream& in, Dados& a) {
 		assert(priori> 0);
 
 		for (size_t j = a.prioriCluster.size(); j < priori; j++) {
-			a.prioriCluster.push_back(Cluster(0,0));
+			a.prioriCluster.push_back(Cluster(0));
 		}
 		a.prioriCluster[priori - 1].insert(i);
 	}
