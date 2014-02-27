@@ -1,0 +1,8 @@
+2 : num_cluster
+2 : m_parameter
+2 : q_parameter
+1 : num_initialization
+1 : var_class
+1 : num_max_iteration
+a.sds b.sds c.sds : INPUT
+out.txt : OUTPUT
